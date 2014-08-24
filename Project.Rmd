@@ -1,0 +1,71 @@
+# Course Project - Practical Machine Learning
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively.
+
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
+
+The goal goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+## Data
+
+The training data for this project are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+## Initial Load And Preparation
+```{r start_out, echo = TRUE}
+library(caret)
+library(ipred)
+library(plyr)
+library(rpart)
+library(RANN)
+
+set.seed(2112)
+
+setwd('C:\\Ray\\DS Cert\\Machine Learning')
+
+testingDataset <- read.csv("pml-testing.csv")
+trainingDataset <- read.csv("pml-training.csv")
+
+inTrain <- createDataPartition(y = trainingDataset$classe, p = 0.6, list = F)
+trainWork <- trainingDataset[inTrain, ]
+testWork <- trainingDataset[-inTrain, ]
+```
+
+## Data Cleanup
+We will remove data columns that are not helpful to our analysis  (ie names, timestamps, etc.).
+
+Create a training partition and a testing partition.
+```{r cleanup, echo = TRUE}
+trainWorkClean <- trainWork[-c(1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150)]
+testWorkClean  <-  testWork[-c(1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150)]
+```
+
+## Building A Model
+I have decided to use a "Bagged Tree".  This is a Bootstrap Aggregation model designed to improve the stability and accuracy in Machine Learning Algorithms.  It also reduces variance and helps to avoid overfitting.
+```{r model, echo = TRUE}
+fit <- train(classe ~ ., method = "treebag", data = trainWorkClean)
+```
+
+## Examine The Model
+```{r results, echo = TRUE}
+fit
+```
+
+## Compare Results / Cross Validation
+Check results against the testing partition of our training dataset.
+```{r oos_error_rate, echo = TRUE}
+mean(testWorkClean$classe == predict(fit, testWorkClean))
+```
+
+## Final Prediction
+Apply this model to the test dataset to make final predictions.  The model produced 20/20 correct.
+```{r final_prediction, echo = TRUE}
+predict(fit, testingDataset)
+```
+
+## References
+Bootstrap aggregating  http://en.wikipedia.org/wiki/Bootstrap_aggregating
